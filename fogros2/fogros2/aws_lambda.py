@@ -27,13 +27,17 @@ ARG FUNCTION_DIR
 # Create function directory
 RUN mkdir -p ${FUNCTION_DIR}
 
-# Copy function code
-COPY ./src/FogROS2-lambda/fogros2/app/* ${FUNCTION_DIR}/
-
 # Install the runtime interface client
 RUN /usr/bin/python3 -m pip install  --target ${FUNCTION_DIR}   awslambdaric
 
 RUN wget https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie -O ${FUNCTION_DIR}/aws-lambda-rie
+
+# Copy function code
+COPY ./src/FogROS2-lambda/fogros2/app/* ${FUNCTION_DIR}/
+
+WORKDIR /fog_ws
+COPY . .
+RUN colcon build
 
 # Multi-stage build: grab a fresh copy of the base image
 FROM ${BASE_IMAGE}
@@ -48,9 +52,7 @@ COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 RUN chmod +x ./entry_script.sh && mv ./entry_script.sh /entry_script.sh
 RUN chmod +x ./aws-lambda-rie && mv aws-lambda-rie /usr/local/bin/aws-lambda-rie
 
-WORKDIR fog_ws
-RUN mkdir install
-COPY ./install ./install
+COPY --from=build-image /fog_ws/install /fog_ws/install
 
 WORKDIR ${FUNCTION_DIR}
 
