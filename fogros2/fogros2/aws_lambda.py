@@ -20,14 +20,7 @@ ARG BASE_IMAGE="osrf/ros:humble-desktop"
 FROM ${BASE_IMAGE} as build-image
 
 # Install aws-lambda-cpp build dependencies
-RUN apt-get update && \
-  apt-get install -y \
-  g++ \
-  make \
-  cmake \
-  unzip \
-  python3-pip \
-  libcurl4-openssl-dev
+RUN apt-get update &&   apt-get install -y   g++   make   cmake   unzip   python3-pip   libcurl4-openssl-dev wget
 
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
@@ -35,12 +28,12 @@ ARG FUNCTION_DIR
 RUN mkdir -p ${FUNCTION_DIR}
 
 # Copy function code
-COPY ./src/FogROS2-lambda/fogros2/app/* ${FUNCTION_DIR}
+COPY ./src/FogROS2-lambda/fogros2/app/* ${FUNCTION_DIR}/
 
 # Install the runtime interface client
-RUN pip install \
-        --target ${FUNCTION_DIR} \
-        awslambdaric
+RUN /usr/bin/python3 -m pip install  --target ${FUNCTION_DIR}   awslambdaric
+
+RUN wget https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie -O ${FUNCTION_DIR}/aws-lambda-rie
 
 # Multi-stage build: grab a fresh copy of the base image
 FROM ${BASE_IMAGE}
@@ -52,13 +45,17 @@ WORKDIR ${FUNCTION_DIR}
 
 # Copy in the build image dependencies
 COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
-
+RUN chmod +x ./entry_script.sh && mv ./entry_script.sh /entry_script.sh
+RUN chmod +x ./aws-lambda-rie && mv aws-lambda-rie /usr/local/bin/aws-lambda-rie
 
 WORKDIR fog_ws
 RUN mkdir install
 COPY ./install ./install
 
-ENTRYPOINT [ "/usr/bin/python3", "-m", "awslambdaric" ]
+WORKDIR ${FUNCTION_DIR}
+
+# ENTRYPOINT [ "/usr/bin/python3", "-m", "awslambdaric" ]
+ENTRYPOINT [ "/entry_script.sh" ]
 CMD [ "app.handler" ]
 '''
 class AWSLambdas(CloudInstance):
