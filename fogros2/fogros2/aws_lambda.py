@@ -47,6 +47,8 @@ ARG FUNCTION_DIR
 # Set working directory to function root directory
 WORKDIR ${FUNCTION_DIR}
 
+RUN apt-get update && apt-get install -y ros-humble-rmw-cyclonedds-cpp
+
 # Copy in the build image dependencies
 COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 RUN chmod +x ./entry_script.sh && mv ./entry_script.sh /entry_script.sh
@@ -58,7 +60,7 @@ COPY --from=keplerc/fogros2-sgc:v0.2debug /scripts /scripts
 COPY --from=keplerc/fogros2-sgc:v0.2debug /gdp-router /gdp-router
 
 WORKDIR ${FUNCTION_DIR}
-
+ENV HOME /tmp
 # ENTRYPOINT [ "/usr/bin/python3", "-m", "awslambdaric" ]
 ENTRYPOINT [ "/entry_script.sh" ]
 CMD [ "app.handler" ]
@@ -91,9 +93,9 @@ class AWSLambdas(CloudInstance):
         subprocess.call(f"docker push {self.image_name}", shell=True)
         subprocess.call(f"aws lambda create-function --function-name {self.lambda_name}  --package-type Image   --code ImageUri={self.image_name}  --output text --role arn:aws:iam::736982044827:role/RoleLambda", shell=True)
         from time import sleep
-        sleep(120)
-        subprocess.call(f"aws lambda update-function-configuration --function-name {self.lambda_name} --timeout 900 --memory-size 10240 --output text", shell=True)
-        sleep(120)
+        sleep(60)
+        subprocess.call(f"aws lambda update-function-configuration --function-name {self.lambda_name} --timeout 60 --memory-size 10240 --output text", shell=True)
+        sleep(10)
         subprocess.call(f"aws lambda invoke --function-name {self.lambda_name} {self.response_file_name}&", shell=True)
 
         
