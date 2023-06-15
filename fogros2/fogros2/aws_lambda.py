@@ -53,6 +53,9 @@ RUN chmod +x ./entry_script.sh && mv ./entry_script.sh /entry_script.sh
 RUN chmod +x ./aws-lambda-rie && mv aws-lambda-rie /usr/local/bin/aws-lambda-rie
 
 COPY --from=build-image /fog_ws/install /fog_ws/install
+COPY --from=keplerc/fogros2-sgc:v0.2debug /src /src 
+COPY --from=keplerc/fogros2-sgc:v0.2debug /scripts /scripts
+COPY --from=keplerc/fogros2-sgc:v0.2debug /gdp-router /gdp-router
 
 WORKDIR ${FUNCTION_DIR}
 
