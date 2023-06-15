@@ -91,8 +91,10 @@ class AWSLambdas(CloudInstance):
         subprocess.call(f"docker push {self.image_name}", shell=True)
         subprocess.call(f"aws lambda create-function --function-name {self.lambda_name}  --package-type Image   --code ImageUri={self.image_name}  --output text --role arn:aws:iam::736982044827:role/RoleLambda", shell=True)
         from time import sleep
-        sleep(60)
-        subprocess.call(f"aws lambda invoke --function-name {self.lambda_name} {self.response_file_name}", shell=True)
+        sleep(120)
+        subprocess.call(f"aws lambda update-function-configuration --function-name {self.lambda_name} --timeout 900 --memory-size 10240 --output text", shell=True)
+        sleep(120)
+        subprocess.call(f"aws lambda invoke --function-name {self.lambda_name} {self.response_file_name}&", shell=True)
 
         
 
