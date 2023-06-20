@@ -1,62 +1,41 @@
-
-
-from pydoc import locate
-
-def get_ROS_class(ros_message_type, srv=True):
-    """
-    Returns the ROS message class from ros_message_type.
-    :return AnyMsgClass: Class of the ROS message.
-    """
-    try:
-        package_name, message_name = ros_message_type.split('/')
-    except ValueError:
-        raise ValueError(
-            'ros_message_type should be in the shape of package_msgs/Message' +
-            ' (it was ' + ros_message_type + ')')
-    if not srv:
-        msg_class = locate('{}.msg.{}'.format(package_name, message_name))
-    else:
-        msg_class = locate('{}.srv.{}'.format(package_name, message_name))
-    if msg_class is None:
-        if srv:
-            msg_or_srv = '.srv'
-        else:
-            msg_or_srv = '.msg'
-        raise ValueError(
-            'ros_message_type could not be imported. (' +
-            ros_message_type + ', as "from ' + package_name +
-            msg_or_srv + ' import ' + message_name + '" failed.')
-    return msg_class
-
-get_ROS_class("example_interfaces/AddTwoInts", True)
-
-
+import sys
 
 from example_interfaces.srv import AddTwoInts
-
 import rclpy
 from rclpy.node import Node
+import pickle
+from .util import get_ROS_class
 
-class MinimalService(Node):
+
+class MinimalClientAsync(Node):
 
     def __init__(self):
-        super().__init__('minimal_service')
-        self.srv = self.create_service(AddTwoInts , 'add_two_ints', self.add_two_ints_callback)
+        super().__init__('minimal_client_async')
+        service_class = get_ROS_class("example_interfaces/AddTwoInts")
+        self.cli = self.create_client(service_class, 'add_two_ints')
+        while not self.cli.wait_for_service(timeout_sec=0.1):
+            self.get_logger().info('service not available, waiting again...')
 
-    def add_two_ints_callback(self, request, response):
-        response.sum = request.a + request.b
-        self.get_logger().info('Incoming request\na: %d b: %d' % (request.a, request.b))
-        # response.sum = 0
-        return response
+    def send_request(self):
+        with open("/tmp/pickled_request", "rb") as f:
+            self.req = f.read()
+        self.future = self.cli.call_async(self.req)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    minimal_service = MinimalService()
+    num1 = int(1)
+    num2 = int(2)
+    minimal_client = MinimalClientAsync()
+    response = minimal_client.send_request()
+    minimal_client.get_logger().info(
+        'Result of add_two_ints: for %d + %d = %d' %
+        (num1, num2, response.sum))
 
-    rclpy.spin_once(minimal_service)
-
+    minimal_client.destroy_node()
     rclpy.shutdown()
 
 
