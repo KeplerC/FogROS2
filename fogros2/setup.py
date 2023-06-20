@@ -64,5 +64,9 @@ setup(
             "connect = fogros2.verb.ssh:SSHVerb",
             "image = fogros2.verb.image:ImageVerb",
         ],
+        "console_scripts": [
+            "server = fogros2.lambda_service_proxy_server:main",
+            "client = fogros2.lambda_service_proxy_client:main",
+        ],
     },
 )
