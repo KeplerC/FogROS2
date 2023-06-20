@@ -25,11 +25,13 @@ class MinimalClientAsync(Node):
 def main(args=None):
     rclpy.init(args=args)
 
+    num1 = int(1)
+    num2 = int(2)
     minimal_client = MinimalClientAsync()
-    response = minimal_client.send_request(int(1, 2))
+    response = minimal_client.send_request(num1, num2)
     minimal_client.get_logger().info(
         'Result of add_two_ints: for %d + %d = %d' %
-        (int(sys.argv[1]), int(sys.argv[2]), response.sum))
+        (num1, num2, response.sum))
 
     minimal_client.destroy_node()
     rclpy.shutdown()
