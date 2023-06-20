@@ -26,7 +26,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     minimal_client = MinimalClientAsync()
-    response = minimal_client.send_request(int(sys.argv[1]), int(sys.argv[2]))
+    response = minimal_client.send_request(int(1, 2))
     minimal_client.get_logger().info(
         'Result of add_two_ints: for %d + %d = %d' %
         (int(sys.argv[1]), int(sys.argv[2]), response.sum))
