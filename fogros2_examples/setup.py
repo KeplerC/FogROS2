@@ -49,6 +49,8 @@ setup(
         "console_scripts": [
             "talker = fogros2_examples.talker:main",
             "listener = fogros2_examples.listener:main",
+            'service = fogros2_examples.service_server:main',
+            'client = fogros2_examples.service_client:main',
         ],
     },
 )
