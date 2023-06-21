@@ -16,7 +16,7 @@ class FogROSLambdaService(Node):
             self.add_two_ints_callback
         )
         self.lambda_function = AWSLambdas()
-        self.lambda_function.create()
+        # self.lambda_function.create()
 
     def add_two_ints_callback(self, request, response):
         import jsonpickle
@@ -30,11 +30,17 @@ class FogROSLambdaService(Node):
         with open("/tmp/pickled_request", "w+") as f:
             f.write(final_request)
 
-        # blocks until the function finishes
-        self.lambda_function.invoke("/tmp/pickled_request")
 
+        print(response)
+        ret = self.lambda_function.invoke("/tmp/pickled_request")
+        print(ret)
+        # I don't know why I need to decode twice
+        response = jsonpickle.decode(jsonpickle.decode(ret))
+        print(response)
+        print("response")
+        print(response.sum)
         # request = pickle.loads(request_serialized)
-        self.get_logger().info('Incoming request\na: %d b: %d' % (request.a, request.b))
+        # self.get_logger().info('Incoming request\na: %d b: %d' % (request.a, request.b))
         return response
 
 

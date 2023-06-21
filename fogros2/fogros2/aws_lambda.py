@@ -73,7 +73,8 @@ class AWSLambdas(CloudInstance):
         ros_workspace=os.path.dirname(os.getenv("COLCON_PREFIX_PATH")),
         working_dir_base=instance_dir(),
         aws_user_id = "736982044827",
-        aws_repo_id = "fogros_lambda"
+        aws_repo_id = "fogros_lambda",
+        version = None,
     ):
         self.ros_workspace = ros_workspace
         self._name = get_unique_name()
@@ -82,7 +83,8 @@ class AWSLambdas(CloudInstance):
         self._working_dir = os.path.join(self._working_dir_base, self._name)
         os.makedirs(self._working_dir, exist_ok=True)
 
-        self.version = str(random.randint(0, 999))
+        self.version = str(54)
+        # self.need_to_create = 
 
         self.docker_repo_uri = f"{self.aws_user_id}.dkr.ecr.us-west-1.amazonaws.com/{aws_repo_id}"
         self.lambda_name = f"fogros-lambda-{self.version}"
@@ -100,15 +102,20 @@ class AWSLambdas(CloudInstance):
         subprocess.call(f"docker push {self.image_name}", shell=True)
         subprocess.call(f"aws lambda create-function --function-name {self.lambda_name}  --package-type Image   --code ImageUri={self.image_name}  --output text --role arn:aws:iam::736982044827:role/RoleLambda", shell=True)
         from time import sleep
-        sleep(60)
+        sleep(100)
         subprocess.call(f"aws lambda update-function-configuration --function-name {self.lambda_name} --timeout 60 --memory-size 10240 --output text", shell=True)
         sleep(10)
 
     def invoke(self, request_file_path):
         import json
 
-        invoke_command = f"aws lambda invoke --payload fileb://{request_file_path} --function-name {self.lambda_name} {self.response_file_name}"
-        subprocess.call(invoke_command, shell=True)
+        invoke_command = f"aws lambda invoke --payload fileb://{request_file_path} --function-name {self.lambda_name} {self.response_file_name} --log-type Tail --query 'LogResult' --output text |  base64 -d"
+        ret = subprocess.check_output(invoke_command, shell=True)
+        print(ret)
+        with open(f"/tmp/response-{self.lambda_name}.json") as f:
+            response_file = f.read()
+            print(response_file)
+        return json.dumps(json.loads(response_file)["body"])
 
         
 

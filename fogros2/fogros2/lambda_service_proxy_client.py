@@ -33,10 +33,11 @@ def main(args=None):
     request = jsonpickle.decode(request_parameter)
     minimal_client = MinimalClientAsync()
     response = minimal_client.send_request(request)
+    serialized_response = jsonpickle.encode(response)
 
-    with open("/tmp/serialized_response") as f:
-        print(response)
-        f.write(response)
+    with open("/tmp/serialized_response", "w+") as f:
+        print(serialized_response)
+        f.write(serialized_response)
 
     minimal_client.destroy_node()
     rclpy.shutdown()
