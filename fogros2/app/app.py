@@ -5,10 +5,15 @@ import subprocess
 
 def handler(event, context):
     # for now, not needed for SGC
-    serialized_param = event["param"]
+    serialized_param = json.dumps(event["param"])
+    with open("/tmp/serialized_pickle", "w+") as f:
+        f.write(serialized_param)
     # subprocess.call(". /opt/ros/humble/setup.sh && . /fog_ws/install/setup.sh && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && cd / && /gdp-router router&", shell=True)
     subprocess.call(". /opt/ros/humble/setup.sh && . /fog_ws/install/setup.sh && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && ros2 run fogros2_examples service&", shell=True)
     subprocess.call(f". /opt/ros/humble/setup.sh && . /fog_ws/install/setup.sh && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && ros2 run fogros2 client {serialized_param}", shell=True)
+
+    with open("/tmp/serialized_response") as f:
+        response = f.read()
 
     return {
         "statusCode": 200,
@@ -16,6 +21,6 @@ def handler(event, context):
             "Content-Type": "application/json"
         },
         "body": json.dumps({
-            "Region ": "hello world"
+            "response ": response
         })
     }

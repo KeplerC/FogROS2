@@ -49,7 +49,7 @@ WORKDIR ${FUNCTION_DIR}
 
 RUN apt-get update && apt-get install -y ros-humble-rmw-cyclonedds-cpp python3-pip
 
-RUN pip3 install boto3 jsonpickle
+RUN pip3 install boto3 paramiko scp wgconfig jsonpickle
 
 # Copy in the build image dependencies
 COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}

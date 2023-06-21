@@ -17,9 +17,8 @@ class MinimalClientAsync(Node):
             self.get_logger().info('service not available, waiting again...')
 
     def send_request(self, request):
-        
-        print(self.req.a, self.req.b)
-        self.future = self.cli.call_async(self.req)
+
+        self.future = self.cli.call_async(request)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
@@ -27,11 +26,17 @@ class MinimalClientAsync(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    request_parameter = sys.argv[1]
+    with open("/tmp/serialized_pickle") as f:
+        request_parameter = f.read()
+        print(request_parameter)
     import jsonpickle 
     request = jsonpickle.decode(request_parameter)
     minimal_client = MinimalClientAsync()
     response = minimal_client.send_request(request)
+
+    with open("/tmp/serialized_response") as f:
+        print(response)
+        f.write(response)
 
     minimal_client.destroy_node()
     rclpy.shutdown()
