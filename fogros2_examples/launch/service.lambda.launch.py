@@ -41,7 +41,6 @@ def generate_launch_description():
 
     # create an image for the current workspace 
     # create a function on AWS side (takes longer time)
-    # machine1 = fogros2.AWSLambdas()
 
     # runs the proxy of FogROS 
     # intercepts the desired service

@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 import pickle
 from .util import get_ROS_class
-
+import codecs
 
 class MinimalClientAsync(Node):
 
@@ -16,9 +16,8 @@ class MinimalClientAsync(Node):
         while not self.cli.wait_for_service(timeout_sec=0.1):
             self.get_logger().info('service not available, waiting again...')
 
-    def send_request(self):
-        with open("/tmp/pickled_request", "rb") as f:
-            self.req = pickle.loads(f.read())
+    def send_request(self, request):
+        
         print(self.req.a, self.req.b)
         self.future = self.cli.call_async(self.req)
         rclpy.spin_until_future_complete(self, self.future)
@@ -28,13 +27,11 @@ class MinimalClientAsync(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    num1 = int(1)
-    num2 = int(2)
+    request_parameter = sys.argv[1]
+    import jsonpickle 
+    request = jsonpickle.decode(request_parameter)
     minimal_client = MinimalClientAsync()
-    response = minimal_client.send_request()
-    minimal_client.get_logger().info(
-        'Result of add_two_ints: for %d + %d = %d' %
-        (num1, num2, response.sum))
+    response = minimal_client.send_request(request)
 
     minimal_client.destroy_node()
     rclpy.shutdown()

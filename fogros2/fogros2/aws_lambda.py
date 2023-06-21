@@ -47,7 +47,9 @@ ARG FUNCTION_DIR
 # Set working directory to function root directory
 WORKDIR ${FUNCTION_DIR}
 
-RUN apt-get update && apt-get install -y ros-humble-rmw-cyclonedds-cpp
+RUN apt-get update && apt-get install -y ros-humble-rmw-cyclonedds-cpp python3-pip
+
+RUN pip3 install boto3 jsonpickle
 
 # Copy in the build image dependencies
 COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
@@ -70,21 +72,26 @@ class AWSLambdas(CloudInstance):
     def __init__(self, 
         ros_workspace=os.path.dirname(os.getenv("COLCON_PREFIX_PATH")),
         working_dir_base=instance_dir(),
+        aws_user_id = "736982044827",
+        aws_repo_id = "fogros_lambda"
     ):
         self.ros_workspace = ros_workspace
         self._name = get_unique_name()
+        self.aws_user_id = aws_user_id
         self._working_dir_base = working_dir_base
         self._working_dir = os.path.join(self._working_dir_base, self._name)
         os.makedirs(self._working_dir, exist_ok=True)
 
         self.version = str(random.randint(0, 999))
-        self.docker_repo_uri = "736982044827.dkr.ecr.us-west-1.amazonaws.com/fogros_lambda"
+
+        self.docker_repo_uri = f"{self.aws_user_id}.dkr.ecr.us-west-1.amazonaws.com/{aws_repo_id}"
         self.lambda_name = f"fogros-lambda-{self.version}"
         self.image_name = f"{self.docker_repo_uri}:{self.version}"
         self.response_file_name = f"/tmp/response-{self.lambda_name}.json"
+        self.init()
 
-
-
+    def init(self):
+        subprocess.call(f"aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin {self.aws_user_id}.dkr.ecr.us-west-1.amazonaws.com", shell = True)
 
     def create(self):
         self.create_docker_file()
@@ -96,7 +103,12 @@ class AWSLambdas(CloudInstance):
         sleep(60)
         subprocess.call(f"aws lambda update-function-configuration --function-name {self.lambda_name} --timeout 60 --memory-size 10240 --output text", shell=True)
         sleep(10)
-        subprocess.call(f"aws lambda invoke --function-name {self.lambda_name} {self.response_file_name}&", shell=True)
+
+    def invoke(self, request_file_path):
+        import json
+
+        invoke_command = f"aws lambda invoke --payload fileb://{request_file_path} --function-name {self.lambda_name} {self.response_file_name}"
+        subprocess.call(invoke_command, shell=True)
 
         
 

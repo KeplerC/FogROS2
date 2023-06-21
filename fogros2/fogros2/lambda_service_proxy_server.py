@@ -3,7 +3,8 @@ import rclpy
 from rclpy.node import Node
 import pickle 
 from .util import get_ROS_class
-
+from .aws_lambda import AWSLambdas
+import codecs
 
 class FogROSLambdaService(Node):
 
@@ -14,15 +15,25 @@ class FogROSLambdaService(Node):
             'add_two_ints', 
             self.add_two_ints_callback
         )
+        self.lambda_function = AWSLambdas()
+        self.lambda_function.create()
 
     def add_two_ints_callback(self, request, response):
-        # response.sum = request.a + request.b
-        request_serialized = pickle.dumps(request)
+        import jsonpickle
+        
+        request_serialized = jsonpickle.encode(request) #codecs.encode(pickle.dumps(request), "base64").decode()
+        # print(request_serialized)
+        # TODO: converts to json or other format
         print(request_serialized)
-        with open("/tmp/pickled_request", "wb+") as f:
-            f.write(request_serialized)
+        final_request = "{\"param\": " + request_serialized + "}"
+        print(final_request)
+        with open("/tmp/pickled_request", "w+") as f:
+            f.write(final_request)
 
-        request = pickle.loads(request_serialized)
+        # blocks until the function finishes
+        self.lambda_function.invoke("/tmp/pickled_request")
+
+        # request = pickle.loads(request_serialized)
         self.get_logger().info('Incoming request\na: %d b: %d' % (request.a, request.b))
         return response
 
