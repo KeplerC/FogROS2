@@ -63,9 +63,7 @@ class CloudInstance(abc.ABC):
                 "RMW_IMPLEMENTATION environment variable not set!"
             )
         if "CYCLONEDDS_URI" not in os.environ:
-            raise MissingEnvironmentVariableException(
-                "CYCLONEDDS_URI environment variable not set!"
-            )
+            os.environ["CYCLONEDDS_URI"] = "file:///fog_ws/src/FogROS2/fogros2/configs/cyclonedds.ubuntu.2204.xml"
 
         # others
         self.logger = logging.get_logger(__name__)
