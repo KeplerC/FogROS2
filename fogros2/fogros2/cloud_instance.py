@@ -243,6 +243,8 @@ class CloudInstance(abc.ABC):
 
     def launch_cloud_node(self):
         cmd_builder = BashBuilder()
+        cmd_builder.append(f"rm -rf /home/{self._username}/fog_ws/install")
+        cmd_builder.append(f"rm -rf /home/{self._username}/fog_ws/build")
         cmd_builder.append(f"source /opt/ros/{self.ros_distro}/setup.bash")
         cmd_builder.append(
             f"cd /home/{self._username}/fog_ws && /home/{self._username}/.local/bin/colcon build --symlink-install --cmake-clean-cache"
