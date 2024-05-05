@@ -36,3 +36,8 @@ from .gcp_cloud_instance import GCPCloudInstance  # noqa: F401
 from .kubernetes.generic import KubeInstance  # noqa: F401
 from .cloud_node import CloudNode  # noqa: F401
 from .launch_description import FogROSLaunchDescription  # noqa: F401
+
+if "CYCLONEDDS_URI" not in os.environ:
+  print("setting CYCLONEDDS_URI")
+  os.environ["CYCLONEDDS_URI"] = "file:///fog_ws/src/FogROS2/fogros2/configs/cyclonedds.ubuntu.2204.xml"
+
